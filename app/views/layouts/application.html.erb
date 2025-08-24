@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      @font-face {
+        font-family: "Kavoon";
+        font-weight: 400;
+        font-style: normal;
+        src: url(<%= asset_path('Kavoon-Regular.ttf') %>) format('truetype');
+        font-display: swap;
+      }
+    </style>
+    <title><%= content_for(:title) || "Iota Chan" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <%= favicon_link_tag 'iotachan_logo.png', type: 'image/png' %>
+    <%# for apple devices, an if statement would be better to not load it for browsers in pc, also , i have used asset path instead of url so it can refer asset instead of public file/url %>
+    <link rel="apple-touch-icon" href="<%= asset_path('iotachan_logo.png') %>">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+    <%# this is to disable prefetching - loading content on hover %>
+    <meta name="turbo-prefetch" content="false">
+  </head>
+
+  <body>
+    <%= yield %>
+  </body>
+</html>
