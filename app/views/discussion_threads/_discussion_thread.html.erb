@@ -1,0 +1,99 @@
+<div id="<%= dom_id discussion_thread %>" class="card bg-base-100 shadow-xl mb-6">
+  <div class="card-body">
+    <!-- Header with Title and Board -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+      <h2 class="card-title text-2xl font-bold text-primary">
+        <%= discussion_thread.title %>
+      </h2>
+      <div class="badge badge-secondary badge-lg">
+        Board: <%= discussion_thread.board.name %>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="prose max-w-none mb-6">
+      <%= simple_format(discussion_thread.content) %>
+    </div>
+
+    <!-- Media Attachments -->
+    <% if discussion_thread.media.attached? %>
+      <div class="border-t pt-4 mb-6">
+        <h3 class="text-lg font-semibold mb-3">Attachments</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <% discussion_thread.media.each do |file| %>
+            <div class="border rounded-lg p-3">
+              <% if file.content_type.start_with?('image/') %>
+                <div class="mb-2">
+                  <%= image_tag file, class: "rounded-lg max-w-full h-auto mx-auto" %>
+                </div>
+                <p class="text-sm text-gray-500 text-center truncate"><%= file.filename %></p>
+              <% elsif file.content_type.start_with?('video/') %>
+                <div class="mb-2">
+                  <%= video_tag url_for(file), controls: true, preload: 'metadata', class: "rounded-lg w-full" %>
+                </div>
+                <p class="text-sm text-gray-500 text-center truncate"><%= file.filename %></p>
+              <% else %>
+                <div class="text-center">
+                  <%= link_to rails_blob_path(file, disposition: "attachment"),
+                             class: "btn btn-sm btn-outline" do %>
+                    📎 Download <%= file.filename %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Comments Section -->
+    <div class="border-t pt-6">
+      <h3 class="text-xl font-semibold mb-4">Comments</h3>
+
+      <!-- Comments List -->
+      <div class="space-y-4 mb-6">
+        <% if discussion_thread.comments.any? %>
+          <% discussion_thread.comments.each do |comment| %>
+            <div class="bg-base-200 rounded-lg p-4">
+              <div class="flex items-start gap-3">
+                <div class="avatar placeholder">
+                  <div class="bg-neutral text-neutral-content rounded-full w-8">
+                    <span class="text-xs">👤</span>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm text-gray-500">Anonymous User</p>
+                  <p class="mt-1"><%= comment.content %></p>
+                  <p class="text-xs text-gray-400 mt-2">
+                    <%= time_ago_in_words(comment.created_at) %> ago
+                  </p>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center py-8 text-gray-500">
+            <p>No comments yet. Be the first to comment!</p>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- New Comment Form -->
+      <div class="bg-base-200 rounded-lg p-4">
+        <h4 class="font-semibold mb-3">Add a Comment</h4>
+        <%= form_with(model: [discussion_thread, discussion_thread.comments.build],
+                     class: "space-y-3") do |form| %>
+          <div class="form-control">
+            <%= form.text_area :content,
+                              placeholder: "Write your comment here...",
+                              class: "textarea textarea-bordered h-24",
+                              required: true %>
+          </div>
+          <div class="form-control">
+            <%= form.submit "Post Comment", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

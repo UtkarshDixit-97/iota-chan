@@ -1,4 +1,10 @@
 Rails.application.routes.draw do
+
+  resources :discussion_threads
+  resources :discussion_threads do
+    resources :comments, only: [:create]
+  end
+  resources :boards
   root "home#index"
   get "home/about"
   get "home/rules"

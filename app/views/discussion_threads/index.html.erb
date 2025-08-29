@@ -1,0 +1,16 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Discussion threads" %>
+
+<h1>Discussion threads</h1>
+
+<div id="discussion_threads">
+  <% @discussion_threads.each do |discussion_thread| %>
+    <%= render discussion_thread %>
+    <p>
+      <%= link_to "Show this discussion thread", discussion_thread %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "New discussion thread", new_discussion_thread_path %>

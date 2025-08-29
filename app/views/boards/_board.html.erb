@@ -1,0 +1,251 @@
+<div id="<%= dom_id board %>" class="min-h-screen flex flex-col items-center">
+  <!-- Create Thread Button -->
+  <div class="w-full max-w-4xl flex justify-end mt-4 px-4">
+    <label for="create-thread-modal" class="btn btn-primary modal-button">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Create Thread
+    </label>
+  </div>
+
+  <!-- Create Thread Modal -->
+  <input type="checkbox" id="create-thread-modal" class="modal-toggle" />
+  <div class="modal">
+    <div class="modal-box w-11/12 max-w-5xl">
+      <label for="create-thread-modal" class="btn btn-sm btn-circle absolute right-2 top-2">✕</label>
+      <h3 class="font-bold text-lg mb-4">Create New Thread</h3>
+      <div id="thread-create-form">
+        <!-- Form will be loaded here via AJAX -->
+        <div class="flex justify-center items-center h-40">
+          <span class="loading loading-spinner loading-lg"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rest of your existing code -->
+  <!-- Board Info Section -->
+  <div class="flex flex-col items-center w-full max-w-4xl space-y-4 mt-4">
+    <% if board.main_image.attached? %>
+      <%= image_tag board.main_image, class: "max-w-[200px] h-auto rounded shadow" %>
+    <% end %>
+
+    <span class="w-full text-center text-xl font-semibold border-b pb-2">
+      <%= board.name %>
+    </span>
+
+    <div class="text-sm text-gray-600">
+      <%= board.is_nsfw ? "NSFW" : "SFW" %>
+    </div>
+  </div>
+
+  <!-- Sorting Controls -->
+  <div class="flex justify-end w-full max-w-4xl mt-4 px-4">
+    <div class="dropdown dropdown-end">
+      <label tabindex="0" class="btn btn-sm btn-outline m-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+        </svg>
+        Sort By
+      </label>
+      <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+        <li><%= link_to "Newest First", board_path(board, sort: "newest") %></li>
+        <li><%= link_to "Oldest First", board_path(board, sort: "oldest") %></li>
+        <li><%= link_to "Recently Updated", board_path(board, sort: "updated") %></li>
+        <li><%= link_to "Most Replies", board_path(board, sort: "popular") %></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Threads Section -->
+  <div class="main_threads flex flex-wrap justify-center gap-4 mt-4 w-full px-4">
+    <% @discussion_threads[0..7].each do |thread| %>
+      <%= link_to discussion_thread_path(thread.id), class: "block" do %>
+        <div class="card bg-base-100 shadow-sm sm:basis-[48%] lg:basis-[23%] border-2 border-accent-content text-accent-content rounded-xl hover:bg-primary-content p-1">
+          <figure class="w-[300px] h-[300px] object-cover">
+            <% if thread.media[0]&.content_type&.start_with?('image/') %>
+              <%= image_tag thread.media[0] %>
+            <% elsif thread.media[0]&.content_type&.start_with?('video/') %>
+              <%= video_tag url_for(thread.media[0]) %>
+            <% else %>
+              <%= thread.media[0]&.filename %>
+            <% end %>
+          </figure>
+          <div class="card-body items-center text-center">
+            <h2 class="card-title">
+              <%= thread.title %>
+            </h2>
+            <p><%= thread.content %></p>
+            <div class="text-xs text-gray-500">
+              <%= time_ago_in_words(thread.created_at) %> ago
+              • <%= thread.comments.count %> replies
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<script>
+// Load the form via AJAX when modal is opened
+function initializeThreadModal() {
+  console.log('Initializing thread modal...');
+
+  const modalToggle = document.getElementById('create-thread-modal');
+  const formContainer = document.getElementById('thread-create-form');
+
+  if (!modalToggle || !formContainer) {
+    console.log('Modal elements not found yet, will retry');
+    return false;
+  }
+
+  console.log('Modal elements found');
+
+  let formLoaded = false;
+
+  // Remove any existing event listeners to prevent duplicates
+  const newToggle = modalToggle.cloneNode(true);
+  modalToggle.parentNode.replaceChild(newToggle, modalToggle);
+
+  newToggle.addEventListener('change', function() {
+    console.log('Modal state changed:', this.checked);
+
+    if (this.checked && !formLoaded) {
+      loadForm();
+    }
+  });
+
+  function loadForm() {
+    console.log('Loading form via AJAX...');
+
+    // Show loading spinner
+    formContainer.innerHTML = '<div class="flex justify-center items-center h-40"><span class="loading loading-spinner loading-lg"></span><span class="ml-2">Loading form...</span></div>';
+
+    // Construct the URL properly
+    const url = '<%= new_discussion_thread_path %>?board_id=<%= board.id %>';
+    console.log('Fetching from:', url);
+
+    fetch(url, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'text/html'
+      }
+    })
+    .then(response => {
+      console.log('Response received:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      console.log('Form HTML loaded successfully');
+      formContainer.innerHTML = html;
+      formLoaded = true;
+      setupFormSubmit();
+    })
+    .catch(error => {
+      console.error('Error loading form:', error);
+      formContainer.innerHTML = `
+        <div class="alert alert-error">
+          <p>Error loading form: ${error.message}</p>
+          <button class="btn btn-sm mt-2" onclick="window.location.reload()">Reload Page</button>
+        </div>
+      `;
+    });
+  }
+
+  function setupFormSubmit() {
+    const form = document.getElementById('new_discussion_thread');
+    if (!form) {
+      console.error('Form not found in loaded HTML');
+      return;
+    }
+
+    console.log('Form found, setting up submit handler');
+
+    // Remove any existing event listeners
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+
+    newForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      console.log('Form submission intercepted');
+
+      const formData = new FormData(this);
+      const submitButton = this.querySelector('button[type="submit"]');
+
+      // Show loading state
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Creating...';
+      }
+
+      fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        credentials: 'same-origin'
+      })
+      .then(response => {
+        console.log('Create response:', response.status);
+        if (!response.ok) {
+          return response.json().then(err => { throw err; });
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Thread created successfully:', data);
+        if (data.redirect) {
+          window.location.href = data.redirect;
+        }
+      })
+      .catch(error => {
+        console.error('Error creating thread:', error);
+
+        // Reset button state
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Create Thread';
+        }
+
+        if (error.errors) {
+          // Show errors in the form
+          let errorHtml = '<div class="alert alert-error mb-4"><ul>';
+          error.errors.forEach(err => {
+            errorHtml += `<li>${err}</li>`;
+          });
+          errorHtml += '</ul></div>';
+
+          // Remove previous errors if any
+          const existingErrors = newForm.querySelector('.alert-error');
+          if (existingErrors) {
+            existingErrors.remove();
+          }
+
+          // Prepend errors to the form
+          newForm.insertAdjacentHTML('afterbegin', errorHtml);
+        } else {
+          alert('Error creating thread: ' + error.message);
+        }
+      });
+    });
+  }
+
+  console.log('Thread modal initialized successfully');
+  return true;
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', initializeThreadModal);
+// Also initialize when Turbo navigates
+document.addEventListener('turbo:load', initializeThreadModal);
+// For classic Turbolinks (if you're using it)
+document.addEventListener('turbolinks:load', initializeThreadModal);
+</script>

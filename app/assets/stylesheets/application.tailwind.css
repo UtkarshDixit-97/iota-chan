@@ -1,9 +1,18 @@
 @import "tailwindcss";
+/*importing daisyUI*/
+@plugin "daisyui"{
+  /* theme colors - https://daisyui.com/docs/colors/ */
+  themes: all;
+
+}
+
 /*these are standard breakpoints, mentioned here onlyt for references, so coding becomes easier*/
 @theme {
 
-  --font-my-custom: "Kavoon", sans-serif;
-  --breakpoint-sm: 640px;
+  --font-logo: "Borel";
+  --font-default: "Courier Prime";
+
+  --breakpoint-sm: 500px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
   --breakpoint-Xl: 1280px;
@@ -11,9 +20,7 @@
 }
 
 @layer utilities {
-  .all-ut {
-    font-family: "Kavoon", sans-serif;
-    font-weight: 400;
-    font-size: large;
+  .main_logo{
+    max-height: 200px;
   }
 }
